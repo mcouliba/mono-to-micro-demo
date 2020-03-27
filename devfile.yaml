@@ -1,0 +1,94 @@
+apiVersion: 1.0.0
+metadata:
+  name: wksp-mono-micro
+projects:
+  - name: mono-to-micro-demo
+    source:
+      location: 'https://github.com/mcouliba/mono-to-micro-demo.git'
+      type: git
+      branch: "master"
+components:
+  - id: redhat/workshop-tools/3.1
+    type: chePlugin
+    alias: workshop-tools
+commands:
+  - name: 'Monolith - Initialize OpenShift Manifests'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          oc new-project monolith ;
+          oc process -f template-binary.json | oc create -n monolith -f - ;
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/monolith/src/main/openshift/
+  - name: 'Monolith - Build and Deploy'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          mvn -Popenshift clean package -DskipTests &&
+          oc start-build coolstore --from-file=deployments/ROOT.war;
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/monolith/
+  - name: 'Inventory - Build and Deploy'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          mvn clean package -DskipTests;
+          oc project inventory &&
+          oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=inventory-quarkus -l app=inventory-quarkus ;
+          oc start-build inventory-quarkus  --from-file /projects/cloud-native-workshop-v2-labs-solutions/m2/inventory/target/*-runner.jar --follow ;
+          oc new-app inventory-quarkus; oc expose svc/inventory-quarkus ;
+          oc set probe dc/inventory-quarkus --readiness --get-url=http://:8080/health/ready  ;
+          oc label dc/inventory-quarkus app.openshift.io/runtime=java --overwrite  &&
+          oc label dc/inventory-database app.openshift.io/runtime=postgresql --overwrite &&
+          oc label dc/inventory-quarkus app.kubernetes.io/part-of=inventory --overwrite  &&
+          oc label dc/inventory-database app.kubernetes.io/part-of=inventory --overwrite &&
+          oc annotate dc/inventory-quarkus app.openshift.io/connects-to=inventory-database --overwrite &&
+          oc annotate dc/inventory-quarkus app.openshift.io/vcs-uri=https://github.com/mcouliba/mono-to-micro-demo.git --overwrite &&
+          oc annotate dc/inventory-quarkus app.openshift.io/vcs-ref=ocp-4.3 --overwrite ;
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/inventory/
+  - name: 'Catalog - Build and Deploy'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          oc new-app postgresql-ephemeral --param=DATABASE_SERVICE_NAME=catalog-database --param=POSTGRESQL_DATABASE=catalog --param=POSTGRESQL_USER=catalog --param=POSTGRESQL_PASSWORD=mysecretpassword;
+          mvn clean install spring-boot:repackage -DskipTests;
+          oc project catalog &&
+          oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=catalog-springboot -l app=catalog-springboot ;
+          oc start-build catalog-springboot --from-file /projects/cloud-native-workshop-v2-labs-solutions/m2/catalog/target/catalog-1.0.0-SNAPSHOT.jar --follow ;
+          oc new-app catalog-springboot -e JAVA_OPTS_APPEND='-Dspring.profiles.active=openshift';
+          oc expose service catalog-springboot && 
+          oc set probe dc/catalog-springboot  --readiness --get-url=http://:8080 --initial-delay-seconds=5 --period-seconds=5 --failure-threshold=15;
+          oc label dc/catalog-springboot app.openshift.io/runtime=java --overwrite   &&
+          oc label dc/catalog-database app.openshift.io/runtime=postgresql --overwrite  &&
+          oc label dc/catalog-springboot app.kubernetes.io/part-of=catalog --overwrite   &&
+          oc label dc/catalog-database app.kubernetes.io/part-of=catalog --overwrite  &&
+          oc annotate dc/catalog-springboot app.openshift.io/connects-to=catalog-database --overwrite  &&
+          oc annotate dc/catalog-springboot app.openshift.io/vcs-uri=https://github.com/mcouliba/mono-to-micro-demo.git --overwrite  &&
+          oc annotate dc/catalog-springboot app.openshift.io/vcs-ref=ocp-4.3 --overwrite   ;
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/catalog/
+  - name: 'Service Mesh - Route Traffic to Catalog Service'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/
+  - name: 'Service Mesh - Cancel Route Traffic to Catalog Service'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/
