@@ -1,0 +1,25 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: coolstore
+  namespace: monolith
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - istio-coolstore
+  http:
+    - match:
+        - uri:
+            prefix: /services/products
+      route:
+        - destination:
+            host: catalog-springboot.catalog.svc.cluster.local
+            port:
+              number: 8080
+    - route:
+        - destination:
+            port:
+              number: 8080
+            host: coolstore

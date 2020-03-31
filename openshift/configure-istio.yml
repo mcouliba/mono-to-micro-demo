@@ -1,0 +1,216 @@
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: monolith
+rules:
+  - verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+      - patch
+    apiGroups:
+      - networking.istio.io
+    resources:
+      - destinationrules
+      - gateways
+      - bypasses
+      - serviceentries
+      - sidecars
+      - virtualservices
+  - verbs:
+      - list
+    apiGroups:
+      - authentication.istio.io
+    resources:
+      - policies
+      - meshpolicies
+  - verbs:
+      - list
+    apiGroups:
+      - config.istio.io
+    resources:
+      - rules
+      - quotaspecs
+      - quotaspecbindings
+  - verbs:
+       - list
+    apiGroups:
+      - rbac.istio.io
+    resources:
+      - serviceroles
+      - rbacconfigs
+      - servicerolebindings
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: monolith
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: user7
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: user7-istio
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: catalog
+rules:
+  - verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+      - patch
+    apiGroups:
+      - networking.istio.io
+    resources:
+      - destinationrules
+      - gateways
+      - bypasses
+      - serviceentries
+      - sidecars
+      - virtualservices
+  - verbs:
+      - list
+    apiGroups:
+      - authentication.istio.io
+    resources:
+      - policies
+      - meshpolicies
+  - verbs:
+      - list
+    apiGroups:
+      - config.istio.io
+    resources:
+      - rules
+      - quotaspecs
+      - quotaspecbindings
+  - verbs:
+       - list
+    apiGroups:
+      - rbac.istio.io
+    resources:
+      - serviceroles
+      - rbacconfigs
+      - servicerolebindings
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: catalog
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: user7
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: user7-istio
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: inventory
+rules:
+  - verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+      - patch
+    apiGroups:
+      - networking.istio.io
+    resources:
+      - destinationrules
+      - gateways
+      - bypasses
+      - serviceentries
+      - sidecars
+      - virtualservices
+  - verbs:
+      - list
+    apiGroups:
+      - authentication.istio.io
+    resources:
+      - policies
+      - meshpolicies
+  - verbs:
+      - list
+    apiGroups:
+      - config.istio.io
+    resources:
+      - rules
+      - quotaspecs
+      - quotaspecbindings
+  - verbs:
+       - list
+    apiGroups:
+      - rbac.istio.io
+    resources:
+      - serviceroles
+      - rbacconfigs
+      - servicerolebindings
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: inventory
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: user7
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: user7-istio
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: istio-coolstore
+  namespace: monolith
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: coolstore
+  namespace: monolith
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - istio-coolstore
+  http:
+    - route:
+        - destination:
+            port:
+              number: 8080
+            host: coolstore

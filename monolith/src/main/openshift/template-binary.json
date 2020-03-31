@@ -180,6 +180,9 @@
                         "labels": {
                             "deploymentConfig": "coolstore",
                             "application": "coolstore"
+                        },
+                        "annotations": {
+                            "sidecar.istio.io/inject" : "true"
                         }
                     },
                     "spec": {
