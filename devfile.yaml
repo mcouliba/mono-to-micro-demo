@@ -42,7 +42,7 @@ commands:
           mvn clean package -DskipTests;
           oc project inventory || exit 1;
           oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=inventory-quarkus -l app=inventory-quarkus ;
-          oc start-build inventory-quarkus  --from-file /projects/cloud-native-workshop-v2-labs-solutions/m2/inventory/target/*-runner.jar --follow ;
+          oc start-build inventory-quarkus  --from-file target/*-runner.jar --follow ;
           oc new-app inventory-quarkus; oc expose svc/inventory-quarkus ;
           oc set probe dc/inventory-quarkus --readiness --get-url=http://:8080/health/ready  ;
           oc patch dc/inventory-quarkus --patch '{"spec": {"template": {"metadata": {"annotations": {"sidecar.istio.io/inject": "true"}}}}}';
@@ -66,7 +66,7 @@ commands:
           oc new-app postgresql-ephemeral --param=DATABASE_SERVICE_NAME=catalog-database --param=POSTGRESQL_DATABASE=catalog --param=POSTGRESQL_USER=catalog --param=POSTGRESQL_PASSWORD=mysecretpassword;
           mvn clean install spring-boot:repackage -DskipTests;
           oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=catalog-springboot -l app=catalog-springboot ;
-          oc start-build catalog-springboot --from-file /projects/cloud-native-workshop-v2-labs-solutions/m2/catalog/target/catalog-1.0.0-SNAPSHOT.jar --follow ;
+          oc start-build catalog-springboot --from-file target/catalog-1.0.0-SNAPSHOT.jar --follow ;
           oc new-app catalog-springboot -e JAVA_OPTS_APPEND='-Dspring.profiles.active=openshift';
           oc patch dc/catalog-springboot --patch '{"spec": {"template": {"metadata": {"annotations": {"sidecar.istio.io/inject": "true"}}}}}';
           oc expose service catalog-springboot && 
