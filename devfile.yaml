@@ -99,3 +99,12 @@ commands:
           echo "------  FINISHED  ------"
         component: workshop-tools
         workdir: /projects/mono-to-micro-demo/openshift/
+  - name: 'Service Mesh - Generate Traffic'
+    actions:
+      - type: exec
+        command: >-
+          echo "------  STARTING  ------";
+          while true; do curl -s -o /dev/null -w "%{http_code} " http://istio-ingressgateway-istio-system.apps.cluster-53f5.53f5.example.opentlc.com/#/; done;
+          echo "------  FINISHED  ------"
+        component: workshop-tools
+        workdir: /projects/mono-to-micro-demo/
