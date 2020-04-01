@@ -19,10 +19,11 @@ commands:
           echo "------  STARTING  ------";
           oc new-project monolith ;
           oc project monolith &&
-          oc process -f template-binary.json | oc create -n monolith -f - ;
+          oc process -f monolith/src/main/openshift/template-binary.json | oc create -n monolith -f - ;
+          oc apply -f openshift/configure-istio.yml;
           echo "------  FINISHED  ------"
         component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/monolith/src/main/openshift/
+        workdir: /projects/mono-to-micro-demo/
   - name: 'Monolith - Build and Deploy'
     actions:
       - type: exec
