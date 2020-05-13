@@ -219,7 +219,7 @@
                                     "command": [
                                         "/bin/bash",
                                         "-c",
-                                        "/opt/eap/bin/livenessProbe.sh"
+                                        "date"
                                     ]
                                 },
                                 "timeoutSeconds": 1,
