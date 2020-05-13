@@ -1,0 +1,61 @@
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: catalog
+rules:
+  - verbs:
+      - create
+      - update
+      - delete
+      - get
+      - list
+      - watch
+      - patch
+    apiGroups:
+      - networking.istio.io
+    resources:
+      - destinationrules
+      - gateways
+      - bypasses
+      - serviceentries
+      - sidecars
+      - virtualservices
+  - verbs:
+      - list
+    apiGroups:
+      - authentication.istio.io
+    resources:
+      - policies
+      - meshpolicies
+  - verbs:
+      - list
+    apiGroups:
+      - config.istio.io
+    resources:
+      - rules
+      - quotaspecs
+      - quotaspecbindings
+  - verbs:
+       - list
+    apiGroups:
+      - rbac.istio.io
+    resources:
+      - serviceroles
+      - rbacconfigs
+      - servicerolebindings
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: user7-istio
+  namespace: catalog
+subjects:
+  - kind: User
+    apiGroup: rbac.authorization.k8s.io
+    name: user7
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: user7-istio

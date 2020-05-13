@@ -20,7 +20,7 @@ commands:
           oc new-project monolith ;
           oc project monolith &&
           oc process -f monolith/src/main/openshift/template-binary.json | oc create -n monolith -f - ;
-          oc apply -f openshift/configure-istio.yml;
+          oc apply -f openshift/configure-istio-monolith.yml;
           echo "------  FINISHED  ------"
         component: workshop-tools
         workdir: /projects/mono-to-micro-demo/
@@ -42,6 +42,7 @@ commands:
           echo "------  STARTING  ------";
           mvn clean package -DskipTests;
           oc project inventory || exit 1;
+          oc apply -f ../openshift/configure-istio-inventory.yml;
           oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=inventory-quarkus -l app=inventory-quarkus ;
           oc start-build inventory-quarkus  --from-file target/*-runner.jar --follow ;
           oc new-app inventory-quarkus; oc expose svc/inventory-quarkus ;
@@ -64,6 +65,7 @@ commands:
           echo "------  STARTING  ------";
           oc new-project catalog;
           oc project catalog || exit 1;
+          oc apply -f ../openshift/configure-istio-catalog.yml;
           oc new-app postgresql-ephemeral --param=DATABASE_SERVICE_NAME=catalog-database --param=POSTGRESQL_DATABASE=catalog --param=POSTGRESQL_USER=catalog --param=POSTGRESQL_PASSWORD=mysecretpassword;
           mvn clean install spring-boot:repackage -DskipTests;
           oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=catalog-springboot -l app=catalog-springboot ;
