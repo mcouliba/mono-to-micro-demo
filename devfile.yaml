@@ -8,7 +8,7 @@ projects:
       type: git
       branch: "master"
 components:
-  - id: redhat/workshop-tools/3.3
+  - id: redhat/workshop-tools/3.3.0
     type: chePlugin
     alias: workshop-tools
 commands:
