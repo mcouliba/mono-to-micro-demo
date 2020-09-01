@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 public class ProductImpl implements Product, Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     private String itemId;
 
     private String name;

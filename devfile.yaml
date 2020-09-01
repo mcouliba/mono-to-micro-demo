@@ -12,102 +12,71 @@ components:
     type: chePlugin
     alias: workshop-tools
 commands:
-  - name: 'Monolith - Initialize OpenShift Manifests'
+  - name: Configure tasks
     actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          oc new-project monolith ;
-          oc project monolith &&
-          oc process -f monolith/src/main/openshift/template-binary.json | oc create -n monolith -f - ;
-          oc apply -f openshift/configure-istio-monolith.yml;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/
-  - name: 'Monolith - Build and Deploy'
-    actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          oc new-project monolith ;
-          mvn -Popenshift clean package -DskipTests &&
-          oc start-build coolstore --from-file=deployments/ROOT.war;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/monolith/
-  - name: 'Inventory - Build and Deploy'
-    actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          mvn clean package -DskipTests;
-          oc project inventory || exit 1;
-          oc apply -f ../openshift/configure-istio-inventory.yml;
-          oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=inventory-quarkus -l app=inventory-quarkus ;
-          oc start-build inventory-quarkus  --from-file target/*-runner.jar --follow ;
-          oc new-app inventory-quarkus; oc expose svc/inventory-quarkus ;
-          oc set probe dc/inventory-quarkus --readiness --get-url=http://:8080/health/ready  ;
-          oc patch dc/inventory-quarkus --patch '{"spec": {"template": {"metadata": {"annotations": {"sidecar.istio.io/inject": "true"}}}}}';
-          oc label dc/inventory-quarkus app.openshift.io/runtime=java --overwrite  &&
-          oc label dc/inventory-database app.openshift.io/runtime=postgresql --overwrite &&
-          oc label dc/inventory-quarkus app.kubernetes.io/part-of=inventory --overwrite  &&
-          oc label dc/inventory-database app.kubernetes.io/part-of=inventory --overwrite &&
-          oc annotate dc/inventory-quarkus app.openshift.io/connects-to=inventory-database --overwrite &&
-          oc annotate dc/inventory-quarkus app.openshift.io/vcs-uri=https://github.com/mcouliba/mono-to-micro-demo.git --overwrite &&
-          oc annotate dc/inventory-quarkus app.openshift.io/vcs-ref=ocp-4.3 --overwrite ;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/inventory/
-  - name: 'Catalog - Create, Build and Deploy'
-    actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          oc new-project catalog;
-          oc project catalog || exit 1;
-          oc apply -f ../openshift/configure-istio-catalog.yml;
-          oc new-app postgresql-ephemeral --param=DATABASE_SERVICE_NAME=catalog-database --param=POSTGRESQL_DATABASE=catalog --param=POSTGRESQL_USER=catalog --param=POSTGRESQL_PASSWORD=mysecretpassword;
-          mvn clean install spring-boot:repackage -DskipTests;
-          oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=catalog-springboot -l app=catalog-springboot ;
-          oc start-build catalog-springboot --from-file target/catalog-1.0.0-SNAPSHOT.jar --follow ;
-          oc new-app catalog-springboot -e JAVA_OPTS_APPEND='-Dspring.profiles.active=openshift';
-          oc patch dc/catalog-springboot --patch '{"spec": {"template": {"metadata": {"annotations": {"sidecar.istio.io/inject": "true"}}}}}';
-          oc expose service catalog-springboot && 
-          oc set probe dc/catalog-springboot  --readiness --get-url=http://:8080 --initial-delay-seconds=5 --period-seconds=5 --failure-threshold=15;
-          oc label dc/catalog-springboot app.openshift.io/runtime=java --overwrite   &&
-          oc label dc/catalog-database app.openshift.io/runtime=postgresql --overwrite  &&
-          oc label dc/catalog-springboot app.kubernetes.io/part-of=catalog --overwrite   &&
-          oc label dc/catalog-database app.kubernetes.io/part-of=catalog --overwrite  &&
-          oc annotate dc/catalog-springboot app.openshift.io/connects-to=catalog-database --overwrite  &&
-          oc annotate dc/catalog-springboot app.openshift.io/vcs-uri=https://github.com/mcouliba/mono-to-micro-demo.git --overwrite  &&
-          oc annotate dc/catalog-springboot app.openshift.io/vcs-ref=ocp-4.3 --overwrite   ;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/catalog/
-  - name: 'Service Mesh - Route Traffic to Catalog Service'
-    actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          oc apply -f route-to-new-catalog-service.yml;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/openshift/
-  - name: 'Service Mesh - Cancel Route Traffic to Catalog Service'
-    actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          oc apply -f unroute-to-new-catalog-service.yml;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/openshift/
-  - name: 'Service Mesh - Generate Traffic'
-    actions:
-      - type: exec
-        command: >-
-          echo "------  STARTING  ------";
-          while true; do curl -s -o /dev/null -w "%{http_code} " http://istio-ingressgateway-istio-system.apps.cluster-53f5.53f5.example.opentlc.com/#/; done;
-          echo "------  FINISHED  ------"
-        component: workshop-tools
-        workdir: /projects/mono-to-micro-demo/
+      - referenceContent: |
+          {
+            "tasks": [
+              {
+                  "type": "che",
+                  "label": "Monolith - Build and Deploy",
+                  "command": "oc new-project monolith; oc project monolith || exit 1; oc process -f src/main/openshift/template-binary.json | oc create -n monolith -f - ; mvn -Popenshift clean package -DskipTests && oc start-build coolstore --from-file=deployments/ROOT.war; oc apply -f ../openshift/configure-istio-monolith.yml;",
+                  "target": {
+                      "workingDir": "/projects/mono-to-micro-demo/monolith/",
+                      "component": "workshop-tools"
+                  },
+                  "problemMatcher": []
+              },
+              {
+                  "type": "che",
+                  "label": "Inventory - Build and Deploy",
+                  "command": "mvn clean package -DskipTests; oc project inventory || exit 1; oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=inventory-quarkus -l app=inventory-quarkus ; oc start-build inventory-quarkus  --from-file target/*-runner.jar --follow ; oc new-app inventory-quarkus; oc expose svc/inventory-quarkus ; oc set probe deployment/inventory-quarkus --readiness --get-url=http://:8080/health/ready  ; oc patch deployment/inventory-quarkus --patch '{\"spec\": {\"template\": {\"metadata\": {\"annotations\": {\"sidecar.istio.io/inject\": \"true\"}}}}}'; oc label deployment/inventory-quarkus app.openshift.io/runtime=quarkus app.kubernetes.io/part-of=inventory  --overwrite  && oc label dc/inventory-database app.openshift.io/runtime=postgresql app.kubernetes.io/part-of=inventory --overwrite && oc annotate deployment/inventory-quarkus app.openshift.io/connects-to=inventory-database app.openshift.io/vcs-uri=https://github.com/mcouliba/mono-to-micro-demo.git app.openshift.io/vcs-ref=ocp-4.5 --overwrite ;",
+                  "target": {
+                      "workingDir": "/projects/mono-to-micro-demo/inventory/",
+                      "component": "workshop-tools"
+                  },
+                  "problemMatcher": []
+              },
+              {
+                  "type": "che",
+                  "label": "Catalog - Create, Build and Deploy",
+                  "command": "oc new-project catalog; oc project catalog || exit 1; oc new-app postgresql-ephemeral --param=DATABASE_SERVICE_NAME=catalog-database --param=POSTGRESQL_DATABASE=catalog --param=POSTGRESQL_USER=catalog --param=POSTGRESQL_PASSWORD=mysecretpassword; mvn clean install spring-boot:repackage -DskipTests; oc new-build registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift:1.5 --binary --name=catalog-springboot -l app=catalog-springboot ; oc start-build catalog-springboot --from-file target/catalog-1.0.0-SNAPSHOT.jar --follow ; oc new-app catalog-springboot -e JAVA_OPTS_APPEND='-Dspring.profiles.active=openshift'; oc patch deployment/catalog-springboot --patch '{\"spec\": {\"template\": {\"metadata\": {\"annotations\": {\"sidecar.istio.io/inject\": \"true\"}}}}}'; oc expose service catalog-springboot && oc set probe deployment/catalog-springboot  --readiness --get-url=http://:8080 --initial-delay-seconds=5 --period-seconds=5 --failure-threshold=15; oc label deployment/catalog-springboot app.openshift.io/runtime=spring app.kubernetes.io/part-of=catalog --overwrite   && oc label dc/catalog-database app.openshift.io/runtime=postgresql app.kubernetes.io/part-of=catalog --overwrite  && oc annotate deployment/catalog-springboot app.openshift.io/connects-to=catalog-database app.openshift.io/vcs-uri=https://github.com/mcouliba/mono-to-micro-demo.git app.openshift.io/vcs-ref=ocp-4.3 --overwrite;",
+                  "target": {
+                      "workingDir": "/projects/mono-to-micro-demo/catalog/",
+                      "component": "workshop-tools"
+                  },
+                  "problemMatcher": []
+              },
+              {
+                  "type": "che",
+                  "label": "Service Mesh - Route Traffic to Catalog Service",
+                  "command": "oc apply -f route-to-new-catalog-service.yml;",
+                  "target": {
+                      "workingDir": "/projects/mono-to-micro-demo/openshift/",
+                      "component": "workshop-tools"
+                  },
+                  "problemMatcher": []
+              },
+              {
+                  "type": "che",
+                  "label": "Service Mesh - Cancel Route Traffic to Catalog Service",
+                  "command": "oc apply -f unroute-to-new-catalog-service.yml;",
+                  "target": {
+                      "workingDir": "/projects/mono-to-micro-demo/openshift/",
+                      "component": "workshop-tools"
+                  },
+                  "problemMatcher": []
+              },
+              {
+                  "type": "che",
+                  "label": "Service Mesh - Generate Traffic",
+                  "command": "while true; do curl -s -o /dev/null -w \"%{http_code}\n\" http://istio-ingressgateway-istio-system.apps.cluster-3348.3348.example.opentlc.com; sleep 1; done;",
+                  "target": {
+                      "workingDir": "/projects/mono-to-micro-demo/",
+                      "component": "workshop-tools"
+                  },
+                  "problemMatcher": []
+              }
+            ]
+          }
+        type: vscode-task

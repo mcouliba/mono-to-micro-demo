@@ -42,7 +42,6 @@ public class Transformers {
             prod.setQuantity(entity.getInventory().getQuantity());
         } else {
             log.warning("Inventory for " + entity.getName() + "[" + entity.getItemId()+ "] unknown and missing");
-            // TODO: add Inventory
         }
         return prod;
     }
@@ -59,13 +58,13 @@ public class Transformers {
         int randomNameAndEmailIndex = ThreadLocalRandom.current().nextInt(RANDOM_NAMES.length);
 
         JsonObject jsonObject = Json.createObjectBuilder()
-            .add("orderValue", new Double(cart.getCartTotal()))
+            .add("orderValue", cart.getCartTotal())
             .add("customerName",RANDOM_NAMES[randomNameAndEmailIndex])
             .add("customerEmail",RANDOM_EMAILS[randomNameAndEmailIndex])
             .add("retailPrice", cart.getShoppingCartItemList().stream().mapToDouble(i -> i.getQuantity()*i.getPrice()).sum())
-            .add("discount", new Double(cart.getCartItemPromoSavings()))
-            .add("shippingFee", new Double(cart.getShippingTotal()))
-            .add("shippingDiscount", new Double(cart.getShippingPromoSavings()))
+            .add("discount", cart.getCartItemPromoSavings())
+            .add("shippingFee", cart.getShippingTotal())
+            .add("shippingDiscount", cart.getShippingPromoSavings())
             .add("items",cartItems) 
             .build();
         StringWriter w = new StringWriter();
