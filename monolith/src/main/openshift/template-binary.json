@@ -151,7 +151,16 @@
             "spec": {
                 "strategy": {
                     "type": "Recreate",
-                    "resources": {}
+                    "resources": {
+                        "limits": {
+                            "memory": "4Gi",
+                            "cpu": "1"
+                        },
+                        "requests": {
+                            "memory": "4Gi",
+                            "cpu": "1"
+                        }
+                    }
                 },
                 "triggers": [{
                         "type": "ImageChange",
