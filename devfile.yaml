@@ -11,6 +11,9 @@ components:
   - id: redhat/workshop-tools/3.3.0
     type: chePlugin
     alias: workshop-tools
+    env:
+      - name: MAVEN_MIRROR_URL
+        value: http://nexus.opentlc-shared.svc:8081/repository/maven-all-public 
 commands:
   - name: Configure tasks
     actions:
